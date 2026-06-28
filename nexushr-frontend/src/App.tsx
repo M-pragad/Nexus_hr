@@ -286,13 +286,22 @@ export default function App() {
         salary: parseFloat(newSalary)
       };
       
-      const newEmp = await api.createProfile(payload);
-      localStorage.setItem('employeeId', newEmp.id.toString());
-      if (session) {
-        setSession({ ...session, employeeId: newEmp.id });
+      const isTeamDirectory = activeTab === 'team';
+      const targetUser = isTeamDirectory ? usernameInput : undefined;
+
+      const newEmp = await api.createProfile(payload, targetUser);
+      
+      if (!isTeamDirectory) {
+        localStorage.setItem('employeeId', newEmp.id.toString());
+        if (session) {
+          setSession({ ...session, employeeId: newEmp.id });
+        }
+        setProfile(newEmp);
+        setShowProfileForm(false);
+        showToast('Profile card generated successfully!');
+      } else {
+        showToast(`Profile card registered and linked to ${usernameInput} successfully!`);
       }
-      setProfile(newEmp);
-      setShowProfileForm(false);
       
       // Auto complete "Add First Employee" onboarding step if we created profile
       markStepCompleted(5);
@@ -304,8 +313,10 @@ export default function App() {
       setNewDept('');
       setNewPos('');
       setNewSalary('');
+      if (isTeamDirectory) {
+        setUsernameInput('');
+      }
 
-      showToast('Profile card generated successfully!');
       loadTabContext();
     } catch (err: any) {
       showToast(err.message || 'Failed to establish profile', 'error');
@@ -1010,22 +1021,7 @@ export default function App() {
                   />
                 </div>
 
-                {isRegistering && (
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-                      System Role
-                    </label>
-                    <select
-                      value={roleInput}
-                      onChange={(e) => setRoleInput(e.target.value)}
-                      className="w-full px-3 py-2 rounded border border-slate-200 text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/20 text-sm shadow-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white"
-                    >
-                      <option value="EMPLOYEE">Employee</option>
-                      <option value="MANAGER">Manager</option>
-                      <option value="HR">HR Officer</option>
-                    </select>
-                  </div>
-                )}
+
 
                 <button 
                   type="submit" 
